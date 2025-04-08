@@ -4,8 +4,17 @@
   <meta charset="UTF-8">
   <title>📈 Stock Price Predictor</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
+  <div class="theme-toggle">
+    <label class="switch">
+      <input type="checkbox" id="themeSwitch">
+      <span class="slider round"></span>
+    </label>
+    <span class="theme-label">Toggle Theme</span>
+  </div>
+
   <div class="container">
     <h1>📉 Stock Price Prediction App</h1>
     <form method="POST">
@@ -20,9 +29,63 @@
     {% if prediction %}
       <div class="result">
         <h2>Predicted Price: ${{ prediction }}</h2>
-        <img src="{{ url_for('static', filename=selected + '_plot.png') }}" alt="Prediction Plot">
+        
+        <!-- Plotly Interactive Chart -->
+        <div id="plotlyChart"></div>
+
+        <!-- Fallback Static Charts -->
+        <div class="charts">
+          <img src="{{ url_for('static', filename=selected + '_line.png') }}" alt="Prediction Plot">
+          <img src="{{ url_for('static', filename=selected + '_ma.png') }}" alt="Moving Averages">
+          <img src="{{ url_for('static', filename=selected + '_rsi.png') }}" alt="RSI">
+        </div>
       </div>
     {% endif %}
   </div>
+
+  <div class="loader" id="loader"></div>
+
+  <script>
+    // Theme Toggle
+    const toggle = document.getElementById('themeSwitch');
+    toggle.addEventListener('change', () => {
+      document.body.classList.toggle('light');
+    });
+
+    // Loader
+    const loader = document.getElementById('loader');
+    document.querySelector('form').addEventListener('submit', () => {
+      loader.style.display = 'block';
+    });
+
+    // Plotly Chart
+    {% if prices and ma20 and ma50 %}
+      const trace1 = {
+        x: {{ labels | safe }},
+        y: {{ prices | safe }},
+        mode: 'lines',
+        name: 'Close Price'
+      };
+      const trace2 = {
+        x: {{ labels | safe }},
+        y: {{ ma20 | safe }},
+        mode: 'lines',
+        name: 'MA20'
+      };
+      const trace3 = {
+        x: {{ labels | safe }},
+        y: {{ ma50 | safe }},
+        mode: 'lines',
+        name: 'MA50'
+      };
+      const layout = {
+        title: 'Stock Price Chart with Moving Averages',
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: 'white' },
+      };
+      Plotly.newPlot('plotlyChart', [trace1, trace2, trace3], layout);
+    {% endif %}
+  </script>
 </body>
 </html>
